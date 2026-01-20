@@ -1,6 +1,8 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
+using System.Text.Json;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -16,12 +18,29 @@ public class Function
     /// <param name="input">The event for the Lambda function handler to process.</param>
     /// <param name="context">The ILambdaContext that provides methods for logging and describing the Lambda environment.</param>
     /// <returns></returns>
-    public async Task<User> FunctionHandler(Guid input, ILambdaContext context)
+    public async Task<APIGatewayHttpApiV2ProxyResponse> FunctionHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
     {
-        var dynamoDBContext = new DynamoDBContext(new AmazonDynamoDBClient());
-        var user = await dynamoDBContext.LoadAsync<User>(input);
+        request.PathParameters.TryGetValue("userId", out var userIdString);
 
-        return user;
+        if (Guid.TryParse(userIdString, out var userId))
+        {
+            var dynamoDBContext = new DynamoDBContext(new AmazonDynamoDBClient());
+            var user = await dynamoDBContext.LoadAsync<User>(userId);
+
+            if (user != null)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = JsonSerializer.Serialize(user),
+                    StatusCode = 200
+                };
+            }
+        } 
+        return new APIGatewayHttpApiV2ProxyResponse()
+        {
+            Body = "Invalid userId in path",
+            StatusCode = 404
+        };
     }
 }
 
