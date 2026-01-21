@@ -30,8 +30,7 @@ public class Function
         {
             "GET" => await HandleGetRequest(request),
             "POST" => await HandlePostRequest(request),
-            "DELETE" => await HandleDeleteRequest(request),
-            "PUT" => await HandlePutRequest(request)
+            "DELETE" => await HandleDeleteRequest(request)
         }; 
     }
 
@@ -83,11 +82,6 @@ public class Function
         }
 
         return BadResponse("Invalid userId in path");
-    }
-
-    private async Task<APIGatewayHttpApiV2ProxyResponse> HandlePutRequest(APIGatewayHttpApiV2ProxyRequest request)
-    {
-        throw new NotImplementedException();
     }
 
     private static APIGatewayHttpApiV2ProxyResponse OKResponse() => new APIGatewayHttpApiV2ProxyResponse()
