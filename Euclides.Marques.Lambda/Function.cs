@@ -29,7 +29,9 @@ public class Function
         return request.RequestContext.Http.Method.ToUpper() switch
         {
             "GET" => await HandleGetRequest(request),
-            "POST" => await HandlePostRequest(request)
+            "POST" => await HandlePostRequest(request),
+            "DELETE" => await HandleDeleteRequest(request),
+            "PUT" => await HandlePutRequest(request)
         }; 
     }
 
@@ -66,11 +68,32 @@ public class Function
 
         await _dynamoDbContext.SaveAsync(user);
 
-        return new APIGatewayHttpApiV2ProxyResponse()
-        {
-            StatusCode = 200
-        };
+        return OKResponse();
     }
+
+    private async Task<APIGatewayHttpApiV2ProxyResponse> HandleDeleteRequest(APIGatewayHttpApiV2ProxyRequest request)
+    {
+        request.PathParameters.TryGetValue("userId", out var userIdString);
+
+        if (Guid.TryParse(userIdString, out var userId))
+        {
+            await _dynamoDbContext.DeleteAsync<User>(userId);
+
+            return OKResponse();
+        }
+
+        return BadResponse("Invalid userId in path");
+    }
+
+    private async Task<APIGatewayHttpApiV2ProxyResponse> HandlePutRequest(APIGatewayHttpApiV2ProxyRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
+    private static APIGatewayHttpApiV2ProxyResponse OKResponse() => new APIGatewayHttpApiV2ProxyResponse()
+    {
+        StatusCode = 200
+    };
 
     private static APIGatewayHttpApiV2ProxyResponse BadResponse(string message)
     {
